@@ -1,5 +1,4 @@
-function updateClock ( )
-	{
+function updateClock ( ){
 	  	var currentTime = new Date ( );
 
 		  var currentHours = currentTime.getHours ( );
@@ -27,8 +26,37 @@ function updateClock ( )
   		document.getElementById("liveClock").firstChild.nodeValue = currentTimeString;
 	}
 
-function updateArduino ( )
-	{
+function updateChart(data, index, feature){
+	var context=document.getElementById("house"+(index+1)+"_"+feature).getContext("2d");
+	//alert("house"+(index+1)+"_"+feature);
+	var chart = new Chart(context, {
+	// The type of chart we want to create
+		    type: 'line',
+        	    // The data for our dataset
+		    data: {
+		        labels: data[index]["timestamps"],
+		        datasets: [{
+		                label: feature,
+				backgroundColor: 'rgba(0,0,0,0)',
+	        	        borderColor: 'rgb(255, 99, 132)',
+		                data: data[index][feature]
+		        }]
+		    },
+                    // Configuration options go here
+		    options: { 
+			animation: false,
+			maintainAspectRatio: false,
+			responsive: true,
+			legend: {display: false},
+			title: {display: true, text: feature}
+
+		    }                    
+	});
+	
+
+}
+
+function updateArduino ( ){
 		
 		housesData = [] ;
 		
@@ -43,10 +71,17 @@ function updateArduino ( )
 				console.log("UPDATING info in table...");
 				console.log("REDRAWING realtime charts");
 				console.log("UPLOADING info to storages (on server side)");				
-				housesData=result.split(",")
+				housesData=JSON.parse(result);
 				
 				for(i=0;i<housesData.length;i++){              //4 is the number of desired measurements
-					document.getElementById("house"+(Math.floor(i/4)+1)+"_"+( (i%4) +1)).firstChild.nodeValue =  housesData[i];
+					updateChart(housesData,i,"innerConsumption");
+					updateChart(housesData,i,"outerConsumption");
+					updateChart(housesData,i,"budget");
+					updateChart(housesData,i,"battery");
+
+
+					//old setting
+					//document.getElementById("house"+(Math.floor(i/4)+1)+"_"+( (i%4) +1)).firstChild.nodeValue =  housesData[i];
 				}
     			},
 			error: function(error) {
@@ -57,3 +92,30 @@ function updateArduino ( )
 		
 
 	}
+
+function switchHouse(houseId){
+	$.ajax({
+    			type : "POST",
+    			url : "/",
+			data: '{"command":"SwitchHouse","id":'+(houseId-1)+'}',
+    			contentType: 'application/json;charset=UTF-8',
+    			success: function(result) {
+        			console.log(result);
+				if(result=="Off"){
+					var but=document.getElementById("switchHouse"+houseId);
+					but.classList.remove('houseButtonOn');
+                                        but.classList.add('houseButtonOff');
+					but.innerHTML="Off";					
+				}else{
+					var but=document.getElementById("switchHouse"+houseId);
+					but.classList.remove('houseButtonOff');
+                                        but.classList.add('houseButtonOn');
+					but.innerHTML="On";
+				}
+    			},
+			error: function(error) {
+        			console.log("Error in SwitchHouse request: "+error.toString());
+			}
+
+		});
+}

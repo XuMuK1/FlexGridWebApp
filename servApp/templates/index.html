@@ -9,14 +9,14 @@
  
     <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
  
- 
+    <link rel="stylesheet" type="text/css" href="../static/forms.css">
 </head>
 <script type="text/javascript" src="../static/js/jquery-3.2.1.js"></script>
 <script type="text/javascript" src="../static/js/updates.js"></script>        
+<script type="text/javascript" src="../static/js/Chart.bundle.js"></script>
 
-<body onload="updateClock(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',3000);">
+<body onload="updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',3000); ">
     
-
     <div class="container">
         <div class="header">
             <h2>FlexGrid Monitor</h2>
@@ -25,28 +25,43 @@
  
         <div class="jumbotron">
             <h1>Houses</h1>
-            <p class="lead"></p>
-            <p><a class="btn btn-lg btn-success" href="showSignUp" role="button">Sign up today</a>
-            </p>
-	    <table border="0" cellpadding="5" cellspacing="5" align>
-			<tr> <td width="10%"><h4>Id</h4></td> <td width="30%"><h4>Address</h4></td> <td width="20%"><h4>MoneyLeft</h4></td>
-			<td width="10%"><h4>N1</h4></td><td width="10%"><h4>N2</h4></td> <td width="10%"><h4>N3</h4></td><td width="10%"><h4>N4</h4></td></tr>
+            <p>Each house can produce electricity and share it with others. Here are the major variables.</p>
+	    
+        </div>
+        <div>
+		<table border="0" cellpadding="5" cellspacing="5" >
+						
+			<tbody>
+			<tr> <th style="width:3%"><h4>On/Off</h4></th>
+			     <th style="width:2%"><h4>Id</h4></th> 
+			     <th style="width:19%"><h4>Address</h4></th> 
+			     <th style="width:19%"><h4>Inner Consumption</h4></th>
+			     <th style="width:19%"><h4>Outer Consumption</h4></th>
+			     <th style="width:19%"><h4>Budget</h4></th>
+			     <th style="width:19%"><h4>Battery</h4></th></tr>
 			
 			{% for row in data %}
         			<tr>
+
+				<td>
+				<button id="switchHouse{{row[0]}}" class="houseButton houseButtonOn" onclick="switchHouse({{ row[0] }});">On</button>
+				</td>
+
 			        {% for d in row %}
             				<td>{{ d }}</td>
-			        {% endfor %}
-				{% for num in range(1,5) %}
-                                        <td><span id="house{{ row[0] }}_{{ num }}">ss</span></td>
-				{% endfor %}
+			        {% endfor %}				
+                                        <td><canvas style="width:19%; height:150px" id="house{{ row[0] }}_innerConsumption"></canvas></td>
+					<td><canvas style="width:19%; height: 150px" id="house{{ row[0] }}_outerConsumption"></canvas></td>
+					<td><canvas style="width:19%; height: 150px" id="house{{ row[0] }}_budget"></canvas></td>
+					<td>
+					<canvas style="width:19%; height: 150px" id="house{{ row[0] }}_battery"></canvas>
+					</td> 
 			        </tr>
    			{% endfor %}
 
-			
+			</tbody>
 	    </table>
-        </div>
- 
+	</div>
         <div class="row marketing">
             <div class="col-lg-6">
                 <h4>Bucket List</h4>

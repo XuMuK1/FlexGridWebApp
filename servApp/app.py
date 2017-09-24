@@ -60,7 +60,7 @@ port = 1
 '''
 
 ####
-
+houses =[]  #on/off
 
 import atexit
 
@@ -73,17 +73,36 @@ def main():
 		if(reqjs['command'] == "UpdateArduino"):				
 			return UpdateDataFromArduino()
 			#return "Respond on request to updateArduino"
-
+		else:
+			if(reqjs['command'] == "SwitchHouse"):
+				print(reqjs['id'])
+				return SwitchHouse(reqjs['id'])					
+					
 	else:
 		print("I am updating the info from DB!! (/main.GET)")
     		#sql = "SELECT * from houses;"
     		#cursor.execute(sql)
     		#queryResult = cursor.fetchall()
-		queryResult=[[1,"Future, Innovation str., 1",200],
-			[2,"Future, Innovation str., 2",100],
-			[3,"Future, Innovation str., 3",170]]#until I connect the DB
+		queryResult=[[1,"Future, Innovation str., 1"],
+			[2,"Future, Innovation str., 2"],
+			[3,"Future, Innovation str., 3"]]#until I connect the DB
+		global houses
+		houses=[True,True,True]# all is on
 		return render_template('index.html', data=queryResult)
 
+def SwitchHouse(houseId):
+	global houses
+	print("HOUSES"+str(houses))
+	houses[houseId]=not houses[houseId]
+	print("Switching house"+str(houseId))
+	if(houses[houseId]):
+		print("...ON!")
+		return "On"
+	else:
+		print("...OFF!")
+		return "Off"
+
+	
 ##BLUETOOTH MODULE
 
 def UpdateDataFromArduino():
@@ -108,11 +127,15 @@ def UpdateDataFromArduino():
 	print("parsed2!!")
 	
 	sock.close()'''
-
-	toAnalyze=[str(random.randint(1,9))]*12#temporary
+	respond = [{"timestamps":[z for z in range(0,10)],
+		    "innerConsumption":[random.uniform(15,35) for i in range(0,10)],
+		    "outerConsumption":[random.uniform(15,35) for i in range(0,10)],
+		    "budget":[random.uniform(15,35) for i in range(0,10)],
+		    "battery":[random.uniform(75,100) for i in range(0,10)]} for k in range(0,12)]#another temporary solution
+	#toAnalyze=[str(random.randint(1,9))]*12#temporary
 	print("Uploading observations to DB and sending response to web-page")
 
-	return ",".join(toAnalyze)
+	return json.dumps(respond)
 
 #####
 

@@ -28,6 +28,15 @@ function updateClock ( ){
 
 function updateChart(data, index, feature){
 	var context=document.getElementById("house"+(index+1)+"_"+feature).getContext("2d");
+	
+	var steps=1;
+	var start=1;
+	var step=1;	
+	if(feature=="energyExport"){
+		step=0.3;
+		steps=10;
+		start=0;
+	}
 	//alert("house"+(index+1)+"_"+feature);
 	var chart = new Chart(context, {
 	// The type of chart we want to create
@@ -48,7 +57,11 @@ function updateChart(data, index, feature){
 			maintainAspectRatio: false,
 			responsive: true,
 			legend: {display: false},
-			title: {display: true, text: feature}
+			title: {display: true, text: feature},
+			scaleOverride : true,
+        		scaleSteps : 10,
+        		scaleStepWidth : 50,
+        		scaleStartValue : 0 
 
 		    }                    
 	});
@@ -72,12 +85,13 @@ function updateArduino ( ){
 				console.log("REDRAWING realtime charts");
 				console.log("UPLOADING info to storages (on server side)");				
 				housesData=JSON.parse(result);
-				
+				//alert("LENGTH"+housesData.length);				
 				for(i=0;i<housesData.length;i++){              //4 is the number of desired measurements
+					//alert(i);
 					updateChart(housesData,i,"innerConsumption");
-					updateChart(housesData,i,"outerConsumption");
-					updateChart(housesData,i,"budget");
-					updateChart(housesData,i,"battery");
+					updateChart(housesData,i,"energyExport");
+					//updateChart(housesData,i,"budget");
+					updateChart(housesData,i,"energyImport");
 
 
 					//old setting

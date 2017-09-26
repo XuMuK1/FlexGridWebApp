@@ -15,11 +15,11 @@
 <script type="text/javascript" src="../static/js/updates.js"></script>        
 <script type="text/javascript" src="../static/js/Chart.bundle.js"></script>
 
-<body onload="updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',3000); ">
+<body onload="updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',1000); ">
     
     <div class="container">
         <div class="header">
-            <h2>FlexGrid Monitor</h2>
+            <h1>FlexGrid Monitor</h1>
 	    <h3>Today is <span id="liveClock">&nbsp</span></h3>
         </div>
  
@@ -35,10 +35,10 @@
 			<tr> <th style="width:3%"><h4>On/Off</h4></th>
 			     <th style="width:2%"><h4>Id</h4></th> 
 			     <th style="width:19%"><h4>Address</h4></th> 
-			     <th style="width:19%"><h4>Inner Consumption</h4></th>
-			     <th style="width:19%"><h4>Outer Consumption</h4></th>
-			     <th style="width:19%"><h4>Budget</h4></th>
-			     <th style="width:19%"><h4>Battery</h4></th></tr>
+			     <th style="width:26%"><h4>Inner Consumption</h4></th>
+			     <th style="width:25%"><h4>Energy Export</h4></th>
+			     <!-- <th style="width:19%"><h4>Budget</h4></th>-->
+			     <th style="width:25%"><h4>EnergyImport</h4></th></tr>
 			
 			{% for row in data %}
         			<tr>
@@ -50,12 +50,12 @@
 			        {% for d in row %}
             				<td>{{ d }}</td>
 			        {% endfor %}				
-                                        <td><canvas style="width:19%; height:150px" id="house{{ row[0] }}_innerConsumption"></canvas></td>
-					<td><canvas style="width:19%; height: 150px" id="house{{ row[0] }}_outerConsumption"></canvas></td>
-					<td><canvas style="width:19%; height: 150px" id="house{{ row[0] }}_budget"></canvas></td>
-					<td>
-					<canvas style="width:19%; height: 150px" id="house{{ row[0] }}_battery"></canvas>
-					</td> 
+                                        <td><canvas style="width:26%; height:150px" id="house{{ row[0] }}_innerConsumption"></canvas></td>
+					<td><canvas style="width:25%; height: 150px" id="house{{ row[0] }}_energyExport"></canvas></td>
+					<td><canvas style="width:25%; height: 150px" id="house{{ row[0] }}_energyImport"></canvas></td>
+					<!-- <td>
+					<canvas style="width:19%; height: 150px" id="house_budget"></canvas>
+					</td> --> 
 			        </tr>
    			{% endfor %}
 

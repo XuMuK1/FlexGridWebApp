@@ -39,10 +39,10 @@ cursor = conn.cursor()
 '''
 
 ##INIT BLUETOOTH
-print("Bluetooth module is turned off")
+print("Bluetooth module is turned on")
 
-#import bluetooth
-''' print("Searching for devices...")
+import bluetooth
+print("Searching for devices...")
 print ("")
 nearby_devices = bluetooth.discover_devices()
 num = 0
@@ -57,7 +57,7 @@ bd_addr = nearby_devices[selection]
 
 port = 1
 
-'''
+
 
 ####
 houses =[]  #on/off
@@ -105,8 +105,18 @@ def SwitchHouse(houseId):
 	
 ##BLUETOOTH MODULE
 
+respond = [{"timestamps":[z for z in range(0,10)],
+		    "innerConsumption":[0 for i in range(0,10)],
+		    "energyImport":[0 for i in range(0,10)],
+		    "budget":[0 for i in range(0,10)],
+		    "energyExport":[0 for i in range(0,10)]} for k in range(0,3)]
+
+def shift(seq, n):
+    n = n % len(seq)
+    return seq[n:] + seq[:n]
+	
 def UpdateDataFromArduino():
-	'''BLUETOOTH IS TURNED OFF
+	#BLUETOOTH IS TURNED ON
 	k=0
 	toAnalyze=b""
 	print("connecting...")
@@ -123,15 +133,31 @@ def UpdateDataFromArduino():
 	toAnalyze=str(toAnalyze.decode("utf-8"))
 	toAnalyze=toAnalyze.split("##")[1]
 	toAnalyze=toAnalyze.split(',')
-	print(toAnalyze)
-	print("parsed2!!")
+	#print(toAnalyze)
+	#print("parsed2!!")
+	toAnalyze=[int(toAnalyze[k])/1023*5 for k in range(0,len(toAnalyze))]
+	sock.close()
+	#another temporary solution
+	global respond
+
+	#fixed price(yet)
+	price=2
+
+	inConsNorm=0.01*500 #normalization constants
+	importNorm=1/68*2000
+	exportNorm=0.1*50
+	for i in range(0,3):
+		respond[i]["innerConsumption"]=shift(respond[i]["innerConsumption"],1)		
+		respond[i]["energyImport"]=shift(respond[i]["energyImport"],1) #both for import/export
+		respond[i]["budget"]=shift(respond[i]["budget"],1)
+		respond[i]["energyExport"]=shift(respond[i]["energyExport"],1)
 	
-	sock.close()'''
-	respond = [{"timestamps":[z for z in range(0,10)],
-		    "innerConsumption":[random.uniform(15,35) for i in range(0,10)],
-		    "outerConsumption":[random.uniform(15,35) for i in range(0,10)],
-		    "budget":[random.uniform(15,35) for i in range(0,10)],
-		    "battery":[random.uniform(75,100) for i in range(0,10)]} for k in range(0,12)]#another temporary solution
+		respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
+		respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
+		respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
+		respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price
+		
+	
 	#toAnalyze=[str(random.randint(1,9))]*12#temporary
 	print("Uploading observations to DB and sending response to web-page")
 

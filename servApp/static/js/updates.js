@@ -18,7 +18,7 @@ function updateClock ( ){
 		  currentHours = ( currentHours == 0 ) ? 12 : currentHours;
 	
 		  // Compose the string for display
-		var currentTimeString = currentTime.getDate()+"."+(currentTime.getMonth()+1)+"."+currentTime.getFullYear()+"  and time is "+currentHours + ":" + currentMinutes + timeOfDay;
+		var currentTimeString = currentTime.getDate()+"."+(currentTime.getMonth()+1)+"."+currentTime.getFullYear()+"   "+currentHours + ":" + currentMinutes + timeOfDay;
 
 		  // Update the time display
 		
@@ -28,14 +28,21 @@ function updateClock ( ){
 
 function updateChart(data, index, feature){
 	var context=document.getElementById("house"+(index+1)+"_"+feature).getContext("2d");
-	
-	var steps=1;
-	var start=1;
-	var step=1;	
+	var col;
+	var maxVal=1;	
 	if(feature=="energyExport"){
-		step=0.3;
-		steps=10;
-		start=0;
+		maxVal=3;
+		col='rgb(28, 196, 49)';
+	}else{
+		if(feature=="energyImport"){
+			maxVal=2;
+			col='rgb(237, 141, 35)';
+		}else{
+			if(feature=="innerConsumption"){
+				maxVal=12;
+				col='rgb(223, 45, 45)';
+			}
+		}
 	}
 	//alert("house"+(index+1)+"_"+feature);
 	var chart = new Chart(context, {
@@ -47,7 +54,7 @@ function updateChart(data, index, feature){
 		        datasets: [{
 		                label: feature,
 				backgroundColor: 'rgba(0,0,0,0)',
-	        	        borderColor: 'rgb(255, 99, 132)',
+	        	        borderColor: col,
 		                data: data[index][feature]
 		        }]
 		    },
@@ -57,11 +64,19 @@ function updateChart(data, index, feature){
 			maintainAspectRatio: false,
 			responsive: true,
 			legend: {display: false},
-			title: {display: true, text: feature},
-			scaleOverride : true,
-        		scaleSteps : 10,
-        		scaleStepWidth : 50,
-        		scaleStartValue : 0 
+			title: {display: true, text: feature+"(kWt)"},
+			scales: {
+        			yAxes: [{
+			            display: true,
+			            	ticks: {
+		                    	//suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                			// OR //
+                		    		beginAtZero: true,   // minimum value will be 0.
+					        min: 0,
+						max: maxVal
+            			    }
+        			}]
+    			}
 
 		    }                    
 	});
@@ -125,6 +140,36 @@ function switchHouse(houseId){
 					but.classList.remove('houseButtonOff');
                                         but.classList.add('houseButtonOn');
 					but.innerHTML="On";
+				}
+    			},
+			error: function(error) {
+        			console.log("Error in SwitchHouse request: "+error.toString());
+			}
+
+		});
+}
+
+function updateHouses(){
+	$.ajax({
+    			type : "POST",
+    			url : "/",
+			data: '{"command":"UpdateHouses"}',
+    			contentType: 'application/json;charset=UTF-8',
+    			success: function(result) {
+        			console.log(result);
+				houses=JSON.parse(result);
+				for(i=0; i<houses.length; i++){
+					if(houses[i]){
+					   var but=document.getElementById("switchHouse"+i);
+					   but.classList.remove('houseButtonOn');
+                                       	   but.classList.add('houseButtonOff');
+					   but.innerHTML="Off";
+					}else{
+                                           var but=document.getElementById("switchHouse"+i);
+					   but.classList.remove('houseButtonOff');
+                                           but.classList.add('houseButtonOn');
+					   but.innerHTML="On";
+					}
 				}
     			},
 			error: function(error) {

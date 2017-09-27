@@ -25,10 +25,10 @@ mysql = MySQL()
  
 
 # MySQL configurations
-print("MYSQL is turned off")
+print("MYSQL is turned on")
 
 
-'''
+
 app.config['MYSQL_DATABASE_USER'] = 'xumuk'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'C6h0e2m2istry'
 app.config['MYSQL_DATABASE_DB'] = 'FlexGridDB'
@@ -36,11 +36,11 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 conn= mysql.connect()
 cursor = conn.cursor()
-'''
+
 
 ##INIT BLUETOOTH
-print("Bluetooth module is turned on")
-
+print("Bluetooth module is turned off")
+'''
 import bluetooth
 print("Searching for devices...")
 print ("")
@@ -57,7 +57,7 @@ bd_addr = nearby_devices[selection]
 
 port = 1
 
-
+'''
 
 ####
 houses =[]  #on/off
@@ -76,18 +76,26 @@ def main():
 		else:
 			if(reqjs['command'] == "SwitchHouse"):
 				print(reqjs['id'])
-				return SwitchHouse(reqjs['id'])					
+				return SwitchHouse(reqjs['id'])
+			else:
+				if(reqjs['command'] == "UpdateHouses"):
+					return json.dumps(houses)					
 					
 	else:
 		print("I am updating the info from DB!! (/main.GET)")
-    		#sql = "SELECT * from houses;"
-    		#cursor.execute(sql)
-    		#queryResult = cursor.fetchall()
-		queryResult=[[1,"Future, Innovation str., 1"],
-			[2,"Future, Innovation str., 2"],
-			[3,"Future, Innovation str., 3"]]#until I connect the DB
+		sql = "SELECT houseId, address from houses;"
+		cursor.execute(sql)
+		queryResult = cursor.fetchall()
+		sql = "SELECT OnOff from houses;"
+		cursor.execute(sql)
+		#queryResult=[[1,"Future, Innovation str., 1"],
+		#	[2,"Future, Innovation str., 2"],
+		#	[3,"Future, Innovation str., 3"]]#until I connect the DB
 		global houses
-		houses=[True,True,True]# all is on
+		
+		houses=[k for k in cursor.fetchall()]
+		# all is on
+		print("HOUSES!!!"+str(houses))
 		return render_template('index.html', data=queryResult)
 
 def SwitchHouse(houseId):
@@ -97,26 +105,32 @@ def SwitchHouse(houseId):
 	print("Switching house"+str(houseId))
 	if(houses[houseId]):
 		print("...ON!")
+		sql="UPDATE houses SET OnOff = TRUE WHERE houseId="+str(houseId+1)
+		cursor.execute()
 		return "On"
 	else:
 		print("...OFF!")
+		sql="UPDATE houses SET OnOff = FALSE WHERE houseId="+str(houseId+1)
+		cursor.execute(sql)
+		
 		return "Off"
 
 	
 ##BLUETOOTH MODULE
 
 respond = [{"timestamps":[z for z in range(0,10)],
-		    "innerConsumption":[0 for i in range(0,10)],
-		    "energyImport":[0 for i in range(0,10)],
-		    "budget":[0 for i in range(0,10)],
-		    "energyExport":[0 for i in range(0,10)]} for k in range(0,3)]
+		    "innerConsumption":[random.uniform(0,1) for i in range(0,10)],
+		    "energyImport":[random.uniform(0,1) for i in range(0,10)],
+		    "budget":[random.uniform(0,1) for i in range(0,10)],
+		    "energyExport":[random.uniform(0,1) for i in range(0,10)]} for k in range(0,3)]
 
 def shift(seq, n):
     n = n % len(seq)
     return seq[n:] + seq[:n]
 	
 def UpdateDataFromArduino():
-	#BLUETOOTH IS TURNED ON
+	#BLUETOOTH IS TURNED OFF
+	'''
 	k=0
 	toAnalyze=b""
 	print("connecting...")
@@ -136,7 +150,8 @@ def UpdateDataFromArduino():
 	#print(toAnalyze)
 	#print("parsed2!!")
 	toAnalyze=[int(toAnalyze[k])/1023*5 for k in range(0,len(toAnalyze))]
-	sock.close()
+	sock.close()'''
+
 	#another temporary solution
 	global respond
 
@@ -152,10 +167,11 @@ def UpdateDataFromArduino():
 		respond[i]["budget"]=shift(respond[i]["budget"],1)
 		respond[i]["energyExport"]=shift(respond[i]["energyExport"],1)
 	
-		respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
-		respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
-		respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
-		respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price
+		#Bluetooth is turned OFF
+		#respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
+		#respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
+		#respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
+		#respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price
 		
 	
 	#toAnalyze=[str(random.randint(1,9))]*12#temporary

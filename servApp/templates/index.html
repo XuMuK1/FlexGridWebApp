@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../static/js/updates.js"></script>        
 <script type="text/javascript" src="../static/js/Chart.bundle.js"></script>
 
-<body onload="updateHouses(); updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',1000); ">
+<body onload="updateHouses(); updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',500); ">
     
     <div class="container">
         <div class="header">
@@ -38,6 +38,7 @@
         </div> 
 	<h5 align="right"><span id="liveClock">&nbsp</span></h5>
         <div>
+		<button id="makeBlackOut" class="houseButton houseButtonOn" onclick="MakeBlackout();" style="width:120px;height:25px">BLACKOUT!</button> <br>
 		<table border="0" cellpadding="5" cellspacing="5" >
 						
 			<tbody>

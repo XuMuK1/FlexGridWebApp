@@ -56,8 +56,15 @@ print("You have selected", bluetooth.lookup_name(nearby_devices[selection]))
 bd_addr = nearby_devices[selection]
 
 port = 1
+print("connecting...")
+sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+sock.connect((bd_addr, port))
+
+print("connected")
 
 '''
+
+
 
 ####
 houses =[]  #on/off
@@ -106,14 +113,21 @@ def SwitchHouse(houseId):
 	if(houses[houseId]):
 		print("...ON!")
 		sql="UPDATE houses SET OnOff = TRUE WHERE houseId="+str(houseId+1)
-		cursor.execute()
+		cursor.execute(sql)
+		conn.commit()
 		return "On"
 	else:
 		print("...OFF!")
 		sql="UPDATE houses SET OnOff = FALSE WHERE houseId="+str(houseId+1)
 		cursor.execute(sql)
-		
+		conn.commit()
 		return "Off"
+
+def MakeBlackout():
+	global houses
+	for i in range(0,len(houses)):  
+		houses[i]=False
+	sql="UPDATE houses set OnOff = False;"
 
 	
 ##BLUETOOTH MODULE
@@ -130,37 +144,46 @@ def shift(seq, n):
 	
 def UpdateDataFromArduino():
 	#BLUETOOTH IS TURNED OFF
-	'''
-	k=0
-	toAnalyze=b""
-	print("connecting...")
-	sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-	sock.connect((bd_addr, port))
-	print("connected")
-
-	while(k<=200):
-		k=k+1
-		data = sock.recv(1)
-		toAnalyze=toAnalyze+data
-		
 	
+	k=0   
+	'''
+	toAnalyze=b""
+	
+
+	while(k<=20):
+		try:
+			k=k+1
+			data = sock.recv(10)
+			toAnalyze=toAnalyze+data
+		except:
+			global sock
+			for i in range(0,3):
+				print("Reconnect attempt "+str(i))
+				sock.close()
+				try:
+					sock.connect((bd_addr, port))
+				except:
+					if(i==2):
+						print("SORRY, it is not possible")
+			
+
+		
+	print(toAnalyze)
 	toAnalyze=str(toAnalyze.decode("utf-8"))
 	toAnalyze=toAnalyze.split("##")[1]
 	toAnalyze=toAnalyze.split(',')
 	#print(toAnalyze)
 	#print("parsed2!!")
 	toAnalyze=[int(toAnalyze[k])/1023*5 for k in range(0,len(toAnalyze))]
-	sock.close()'''
-
-	#another temporary solution
-	global respond
-
+	'''
+	
 	#fixed price(yet)
-	price=2
+	price=2   
 
-	inConsNorm=0.01*500 #normalization constants
+	inConsNorm=0.01*500*0.8 #normalization constants
 	importNorm=1/68*2000
-	exportNorm=0.1*50
+	exportNorm=0.1*25
+	print("Calculating")
 	for i in range(0,3):
 		respond[i]["innerConsumption"]=shift(respond[i]["innerConsumption"],1)		
 		respond[i]["energyImport"]=shift(respond[i]["energyImport"],1) #both for import/export
@@ -168,10 +191,10 @@ def UpdateDataFromArduino():
 		respond[i]["energyExport"]=shift(respond[i]["energyExport"],1)
 	
 		#Bluetooth is turned OFF
-		#respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
-		#respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
-		#respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
-		#respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price
+		'''respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
+		respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
+		respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
+		respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price    '''
 		
 	
 	#toAnalyze=[str(random.randint(1,9))]*12#temporary

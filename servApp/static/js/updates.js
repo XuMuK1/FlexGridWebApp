@@ -156,24 +156,78 @@ function updateHouses(){
 			data: '{"command":"UpdateHouses"}',
     			contentType: 'application/json;charset=UTF-8',
     			success: function(result) {
-        			console.log(result);
+        			console.log("UPDHOUSES_RESULT "+result);
 				houses=JSON.parse(result);
 				for(i=0; i<houses.length; i++){
-					if(houses[i]){
-					   var but=document.getElementById("switchHouse"+i);
-					   but.classList.remove('houseButtonOn');
-                                       	   but.classList.add('houseButtonOff');
-					   but.innerHTML="Off";
+					if(houses[i]==1){
+					   console.log("HOUSE "+i+" is ON");
+					   var but=document.getElementById("switchHouse"+(i+1));
+					   if(but.innerHTML=="Off"){
+						   but.classList.remove('houseButtonOff');
+	        	                       	   but.classList.add('houseButtonOn');
+						   but.innerHTML="On";
+					   }
 					}else{
-                                           var but=document.getElementById("switchHouse"+i);
-					   but.classList.remove('houseButtonOff');
-                                           but.classList.add('houseButtonOn');
-					   but.innerHTML="On";
+					   console.log("HOUSE "+i+" is OFF");
+                                           var but=document.getElementById("switchHouse"+(i+1));
+					   if(but.innerHTML=="On"){
+						   but.classList.remove('houseButtonOn');
+	        	                       	   but.classList.add('houseButtonOff');
+						   but.innerHTML="Off";
+					   }
+
 					}
 				}
     			},
 			error: function(error) {
         			console.log("Error in SwitchHouse request: "+error.toString());
+			}
+
+		});
+}
+
+function SwitchBlackout(){
+	console.log("Pending Blackout switch");
+	$.ajax({
+    			type : "POST",
+    			url : "/",
+			data: '{"command":"SwitchBlackout"}',
+    			contentType: 'application/json;charset=UTF-8',
+    			success: function(result) {
+        			console.log(result);
+				if(result=="Off"){
+					for(i=0; ; i++){
+						var but=document.getElementById("switchHouse"+(i+1));
+						console.log("Blackout "+i);
+						if(but==null){
+							break;
+						}
+
+						if(but.innerHTML=="On"){
+						   but.classList.remove('houseButtonOn');
+	                                       	   but.classList.add('houseButtonOff');
+						   but.innerHTML="Off";
+						}
+					} 
+				}else{
+					for(i=0; ; i++){
+						var but=document.getElementById("switchHouse"+(i+1));
+						console.log("NOBlackout "+i);
+						if(but==null){
+							break;
+						}
+
+						if(but.innerHTML=="Off"){
+						   but.classList.remove('houseButtonOff');
+	                                       	   but.classList.add('houseButtonOn');
+						   but.innerHTML="On";
+						}
+					}
+				}
+
+    			},
+			error: function(error) {
+        			console.log("Error in SwitchBlackout request: "+error.toString());
 			}
 
 		});

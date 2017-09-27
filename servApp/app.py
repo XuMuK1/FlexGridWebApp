@@ -86,7 +86,21 @@ def main():
 				return SwitchHouse(reqjs['id'])
 			else:
 				if(reqjs['command'] == "UpdateHouses"):
-					return json.dumps(houses)					
+					sql = "SELECT OnOff from houses;"
+					cursor.execute(sql)
+					global houses
+					hh=cursor.fetchall()
+					for k in range(0,len(hh)):
+						x, = hh[k]
+						if(x==1):
+							houses[k]=True
+						else:
+							houses[k]=False
+					print("UpdatedHouses "+str(houses))
+					return json.dumps(houses)
+				else: 
+					if(reqjs['command'] == "SwitchBlackout"):                       
+						return SwitchBlackout()					
 					
 	else:
 		print("I am updating the info from DB!! (/main.GET)")
@@ -99,9 +113,24 @@ def main():
 		#	[2,"Future, Innovation str., 2"],
 		#	[3,"Future, Innovation str., 3"]]#until I connect the DB
 		global houses
-		
-		houses=[k for k in cursor.fetchall()]
+		hh=cursor.fetchall()
+		if(len(houses)==0):
+			for k in range(0,len(hh)):
+				x, = hh[k]
+				if(x==1):
+					houses.append(True)
+				else:
+					houses.append(False)
 		# all is on
+		else:
+			for k in range(0,len(hh)):
+				x, = hh[k]
+				if(x==1):
+					houses[k]=True
+				else:
+					houses[k]=False
+
+
 		print("HOUSES!!!"+str(houses))
 		return render_template('index.html', data=queryResult)
 
@@ -123,11 +152,27 @@ def SwitchHouse(houseId):
 		conn.commit()
 		return "Off"
 
-def MakeBlackout():
+def SwitchBlackout():
 	global houses
+	ans="On"
 	for i in range(0,len(houses)):  
-		houses[i]=False
-	sql="UPDATE houses set OnOff = False;"
+		if(houses[i]):
+			ans="Off"
+			break
+	sql=""
+	if(ans=="Off"):		
+		sql="UPDATE houses set OnOff = False;"
+		print("BLACKOUT!")
+		houses=[False for k in range(0,len(houses))]
+	else:
+		sql="UPDATE houses set OnOff = True;"
+		print("All is ON!")
+		houses=[True for k in range(0,len(houses))]
+
+	cursor.execute(sql)
+	conn.commit()
+
+	return ans		
 
 	
 ##BLUETOOTH MODULE

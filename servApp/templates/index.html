@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../static/js/updates.js"></script>        
 <script type="text/javascript" src="../static/js/Chart.bundle.js"></script>
 
-<body onload="updateHouses(); updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',500); ">
+<body onload="updateHouses(); updateClock(); updateArduino(); setInterval('updateClock()', 1000 ); setInterval('updateArduino()',700); ">
     
     <div class="container">
         <div class="header">
@@ -43,8 +43,7 @@
 						
 			<tbody>
 			<tr> <th style="width:3%"><h4>On/Off</h4></th>
-			     <th style="width:2%"><h4>Id</h4></th> 
-			     <th style="width:19%"><h4>Address</h4></th> 
+			     <th style="width:21%"><h4>Budget</h4></th> 
 			     <th style="width:26%"><h4>Inner Consumption</h4></th>
 			     <th style="width:25%"><h4>Energy Export</h4></th>
 			     <!-- <th style="width:19%"><h4>Budget</h4></th>-->
@@ -57,9 +56,14 @@
 				<button id="switchHouse{{row[0]}}" class="houseButton houseButtonOn" onclick="switchHouse({{ row[0] }});">On</button>
 				</td>
 
-			        {% for d in row %}
-            				<td>{{ d }}</td>
-			        {% endfor %}				
+			        <td>
+			        	<table style="width:100%;height:100%">
+						<tr><td><div id="house{{row[0]}}_sum"></div></td></tr>
+						<tr><td style="width:50%;color:rgb(20,200,45)"><div id="house{{row[0]}}_plus"></div></td>
+						<td style="width:50%;color:rgb(200,20,45)"><div id="house{{row[0]}}_minus"></div></td></tr>
+					</table>
+				</td>
+				
                                         <td><canvas style="width:26%; height:150px" id="house{{ row[0] }}_innerConsumption"></canvas></td>
 					<td><canvas style="width:25%; height: 150px" id="house{{ row[0] }}_energyExport"></canvas></td>
 					<td><canvas style="width:25%; height: 150px" id="house{{ row[0] }}_energyImport"></canvas></td>
@@ -72,15 +76,13 @@
 			</tbody>
 	    </table>
 	</div>
-	<h1 id="News">News</h1>
-        <div>Here the news will be.
-	</div>
-	<h1 id="About">About</h1>
-	<div >Here the About shit will be.
-	</div>
-	<h1 id="Team">Team</h1>
-	<div>Here the team will be.
-	</div>
+	<table style="width:100%">
+		<tr>
+			<td style="width:50%; height: 300px"><h2>Company Month Revenue</h2><div style="font-size: 38px;color: rgb(20,230,85); text-align:'center';padding-top:20px;padding-left:20px;width:100%;height:80%" id="CompanyRevenue">OH NO</div></td>
+			    <td style="width:50%; height: 300px"><canvas style="width:100%;height:100%" id="SystemLoad"></canvas></td>
+		
+		</tr>
+	</table>
  
         <footer class="footer">
             <p>&copy; Company 2015</p>

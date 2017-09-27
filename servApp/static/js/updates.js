@@ -27,6 +27,7 @@ function updateClock ( ){
 	}
 
 function updateChart(data, index, feature){
+	console.log("UPDATING "+"house"+(index+1)+"_"+feature)
 	var context=document.getElementById("house"+(index+1)+"_"+feature).getContext("2d");
 	var col;
 	var maxVal=1;	
@@ -35,7 +36,7 @@ function updateChart(data, index, feature){
 		col='rgb(28, 196, 49)';
 	}else{
 		if(feature=="energyImport"){
-			maxVal=2;
+			maxVal=4;
 			col='rgb(237, 141, 35)';
 		}else{
 			if(feature=="innerConsumption"){
@@ -101,20 +102,64 @@ function updateArduino ( ){
 				console.log("UPLOADING info to storages (on server side)");				
 				housesData=JSON.parse(result);
 				//alert("LENGTH"+housesData.length);				
-				for(i=0;i<housesData.length;i++){              //4 is the number of desired measurements
+				for(i=0;i<housesData.length-2;i++){              //-2 for aggregated values
 					//alert(i);
 					updateChart(housesData,i,"innerConsumption");
 					updateChart(housesData,i,"energyExport");
 					//updateChart(housesData,i,"budget");
 					updateChart(housesData,i,"energyImport");
-
-
+					document.getElementById("house"+(i+1)+"_sum").innerHTML=Math.round(100*housesData[housesData.length-2][3*i])/100;
+					document.getElementById("house"+(i+1)+"_plus").innerHTML=Math.round(100*housesData[housesData.length-2][3*i+1])/100;
+					document.getElementById("house"+(i+1)+"_minus").innerHTML=Math.round(100*housesData[housesData.length-2][3*i+2])/100;
 					//old setting
 					//document.getElementById("house"+(Math.floor(i/4)+1)+"_"+( (i%4) +1)).firstChild.nodeValue =  housesData[i];
 				}
-    			},
+			
+				//Out the houses Budgets
+
+					
+				document.getElementById("CompanyRevenue").innerHTML=Math.round(100*housesData[housesData.length-2][9])/100+"";
+				
+				var context=document.getElementById("SystemLoad").getContext("2d");
+				var chart = new Chart(context, {
+		// The type of chart we want to create
+			    		    type: 'line',
+	        	    // The data for our dataset
+					    data: {
+						        labels: housesData[0]["timestamps"],
+			       				datasets: [{
+					                	label: "SystemLoad",
+								backgroundColor: 'rgba(0,0,0,0)',
+			        			        borderColor: 'rgb(148, 85, 29)',
+						                data: housesData[housesData.length-1]["systemLoad"]
+						        }]
+			    		    },
+	                    // Configuration options go here
+					    options: { 
+						animation: false,
+						maintainAspectRatio: false,
+						responsive: false,
+						legend: {display: false},
+						title: {display: true, text: "SystemLoad(kWt)"},
+						scales: {
+	        					yAxes: [{
+						            display: true,
+						            ticks: {
+		                    	//suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+	                			// OR //
+		        	        		    		beginAtZero: true,   // minimum value will be 0.
+								        min: 0,
+									max: 12
+	        		    			    }
+			        			}]
+	    					}
+	
+			    		}                    
+				});
+				
+  			},
 			error: function(error) {
-        			console.log("Error in UpdateArduino request: "+error.toString());
+       				console.log("Error in UpdateArduino request: "+error.toString());
 			}
 
 		});

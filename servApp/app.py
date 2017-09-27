@@ -39,8 +39,8 @@ cursor = conn.cursor()
 
 
 ##INIT BLUETOOTH
-print("Bluetooth module is turned off")
-'''
+print("Bluetooth module is turned on")
+
 import bluetooth
 print("Searching for devices...")
 print ("")
@@ -62,7 +62,7 @@ sock.connect((bd_addr, port))
 
 print("connected")
 
-'''
+
 
 
 
@@ -96,7 +96,7 @@ def main():
 							houses[k]=True
 						else:
 							houses[k]=False
-					print("UpdatedHouses "+str(houses))
+					#print("UpdatedHouses "+str(houses))
 					return json.dumps(houses)
 				else: 
 					if(reqjs['command'] == "SwitchBlackout"):                       
@@ -131,7 +131,7 @@ def main():
 					houses[k]=False
 
 
-		print("HOUSES!!!"+str(houses))
+		#print("HOUSES!!!"+str(houses))
 		return render_template('index.html', data=queryResult)
 
 def SwitchHouse(houseId):
@@ -142,12 +142,14 @@ def SwitchHouse(houseId):
 	if(houses[houseId]):
 		print("...ON!")
 		sql="UPDATE houses SET OnOff = TRUE WHERE houseId="+str(houseId+1)
+		sock.send(str(houseId+1+3))
 		cursor.execute(sql)
 		conn.commit()
 		return "On"
 	else:
 		print("...OFF!")
 		sql="UPDATE houses SET OnOff = FALSE WHERE houseId="+str(houseId+1)
+		sock.send(str(houseId+1))
 		cursor.execute(sql)
 		conn.commit()
 		return "Off"
@@ -163,10 +165,12 @@ def SwitchBlackout():
 	if(ans=="Off"):		
 		sql="UPDATE houses set OnOff = False;"
 		print("BLACKOUT!")
+		sock.send("0")
 		houses=[False for k in range(0,len(houses))]
 	else:
 		sql="UPDATE houses set OnOff = True;"
 		print("All is ON!")
+		sock.send("7")
 		houses=[True for k in range(0,len(houses))]
 
 	cursor.execute(sql)
@@ -177,11 +181,14 @@ def SwitchBlackout():
 	
 ##BLUETOOTH MODULE
 
-respond = [{"timestamps":[z for z in range(0,10)],
-		    "innerConsumption":[random.uniform(0,1) for i in range(0,10)],
-		    "energyImport":[random.uniform(0,1) for i in range(0,10)],
-		    "budget":[random.uniform(0,1) for i in range(0,10)],
-		    "energyExport":[random.uniform(0,1) for i in range(0,10)]} for k in range(0,3)]
+respond = [{"timestamps":[z+1 for z in range(0,24)],
+		    "innerConsumption":[random.uniform(0,1) for i in range(0,24)],
+		    "energyImport":[random.uniform(0,1) for i in range(0,24)],
+		    "budget":[random.uniform(0,1) for i in range(0,24)],
+		    "energyExport":[random.uniform(0,1) for i in range(0,24)]} for k in range(0,3)]
+respond.append([100,30,20,100,20,30,100,20,30,1000])#3houses sum+-  and aggrCompanyRevenue
+
+respond.append({"companyRevenue":[random.uniform(0,1) for i in range(0,24)],"systemLoad":[random.uniform(0,1) for i in range(0,24)]})
 
 def shift(seq, n):
     n = n % len(seq)
@@ -191,14 +198,14 @@ def UpdateDataFromArduino():
 	#BLUETOOTH IS TURNED OFF
 	
 	k=0   
-	'''
+	
 	toAnalyze=b""
 	
 
-	while(k<=20):
+	while(k<=200):
 		try:
 			k=k+1
-			data = sock.recv(10)
+			data = sock.recv(1)
 			toAnalyze=toAnalyze+data
 		except:
 			global sock
@@ -213,35 +220,78 @@ def UpdateDataFromArduino():
 			
 
 		
-	print(toAnalyze)
+	#print(toAnalyze)
 	toAnalyze=str(toAnalyze.decode("utf-8"))
 	toAnalyze=toAnalyze.split("##")[1]
 	toAnalyze=toAnalyze.split(',')
 	#print(toAnalyze)
 	#print("parsed2!!")
 	toAnalyze=[int(toAnalyze[k])/1023*5 for k in range(0,len(toAnalyze))]
-	'''
+
 	
 	#fixed price(yet)
 	price=2   
+	fee=price/2
 
 	inConsNorm=0.01*500*0.8 #normalization constants
 	importNorm=1/68*2000
 	exportNorm=0.1*25
-	print("Calculating")
+	sql="INSERT INTO observations (timest,innerConsumption1,energyExport1, energyImport1,"
+	sql=sql+"innerConsumption2,energyExport2, energyImport2,"
+	sql=sql+"innerConsumption3,energyExport3, energyImport3,price,fee,companyRevenue,systemLoad) VALUES"
+	sql=sql+"(NOW()"
+	
+	exx=0
+	budgets=[100,20,30,100,20,30,100,20,30,1000]
+	
 	for i in range(0,3):
-		respond[i]["innerConsumption"]=shift(respond[i]["innerConsumption"],1)		
+		sql1="SELECT innerConsumption"+str(i+1)+ " FROM observations ORDER BY id DESC limit 23"
+		cursor.execute(sql1)
+		respond[i]["innerConsumption"]=list(reversed([list(x)[0] for x in cursor.fetchall()]))
+
+		sql1="SELECT energyImport"+str(i+1)+ " FROM observations ORDER BY id DESC limit 23"
+		cursor.execute(sql1)
+		respond[i]["energyImport"]=list(reversed([list(x)[0] for x in cursor.fetchall()]))
+
+		sql1="SELECT energyExport"+str(i+1)+ " FROM observations ORDER BY id DESC limit 23"
+		cursor.execute(sql1)
+		respond[i]["energyExport"]=list(reversed([list(x)[0] for x in cursor.fetchall()]))
+
+		#respond[i]["timestamps"]=shift(respond[i]["timestamps"],1)		
+		'''respond[i]["innerConsumption"]=shift(respond[i]["innerConsumption"],1)		
 		respond[i]["energyImport"]=shift(respond[i]["energyImport"],1) #both for import/export
 		respond[i]["budget"]=shift(respond[i]["budget"],1)
 		respond[i]["energyExport"]=shift(respond[i]["energyExport"],1)
-	
-		#Bluetooth is turned OFF
-		'''respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
+	        '''
+		#Bluetooth is turned ON
+		respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1]=(toAnalyze[4*i+2]-toAnalyze[4*i+1])*(toAnalyze[4*i+2])*inConsNorm
 		respond[i]["energyImport"][len(respond[i]["energyImport"])-1]=(toAnalyze[4*i]-toAnalyze[4*i+2])**2 * importNorm
 		respond[i]["energyExport"][len(respond[i]["energyExport"])-1]=(5-toAnalyze[4*i+3])**2 * exportNorm
-		respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price    '''
-		
+		respond[i]["budget"][len(respond[i]["budget"])-1]=respond[i]["energyImport"][len(respond[i]["energyImport"])-1]*price
+    
+		exx=exx+respond[i]["energyExport"][len(respond[i]["energyExport"])-1]
+		budgets[3*i+1]= (price-fee)*sum(respond[i]["energyExport"])
+		budgets[3*i+2]= price*sum(respond[i]["energyImport"])
+		budgets[3*i]=budgets[3*i+1]-budgets[3*i+2]
+
+		sql=sql+","
+		sql=sql+str(respond[i]["innerConsumption"][len(respond[i]["innerConsumption"])-1])+","
+		sql=sql+str(respond[i]["energyExport"][len(respond[i]["energyExport"])-1])+","
+		sql=sql+str(respond[i]["energyImport"][len(respond[i]["energyImport"])-1])
+
+	respond[len(respond)-1]["companyRevenue"]=shift(respond[-1]["companyRevenue"],1)
+	respond[len(respond)-1]["companyRevenue"][-1]=exx*fee	
+	respond[len(respond)-1]["systemLoad"]=shift(respond[-1]["systemLoad"],1)	
+	respond[len(respond)-1]["systemLoad"][-1]=exx	
+
+	budgets[-1]=sum(respond[len(respond)-1]["companyRevenue"])#compRevCumulative
+	respond[-2]=budgets
+	sql=sql+","+str(price)+","+str(fee)+","+str(exx*fee)+","+str(exx)+");"
+	cursor.execute(sql)
+	conn.commit()
 	
+	
+
 	#toAnalyze=[str(random.randint(1,9))]*12#temporary
 	print("Uploading observations to DB and sending response to web-page")
 
